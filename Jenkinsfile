@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "market-app"
-        IMAGE_TAG  = "latest"
         DOCKERHUB_USERNAME = "madhu58"
+        IMAGE_NAME = "market-app"
+        IMAGE_TAG = "latest"
     }
 
     stages {
@@ -15,10 +15,10 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build Image') {
             steps {
                 bat """
-                docker build -t %madhu58%/%IMAGE_NAME%:%IMAGE_TAG% .
+                docker build -t %DOCKERHUB_USERNAME%/%IMAGE_NAME%:%IMAGE_TAG% .
                 """
             }
         }
@@ -38,24 +38,16 @@ pipeline {
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Push Image') {
             steps {
                 bat """
-                docker push %madhu58%/%IMAGE_NAME%:%IMAGE_TAG%
+                docker push %DOCKERHUB_USERNAME%/%IMAGE_NAME%:%IMAGE_TAG%
                 """
             }
         }
     }
 
     post {
-        success {
-            echo 'Docker image built and pushed successfully.'
-        }
-
-        failure {
-            echo 'Pipeline failed.'
-        }
-
         always {
             cleanWs()
         }
