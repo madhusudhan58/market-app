@@ -1,9 +1,10 @@
 pipeline {
-
     agent any
 
     environment {
-        IMAGE = "madhu58/market-app"
+        IMAGE_NAME = "market-app"
+        IMAGE_TAG  = "latest"
+        DOCKERHUB_USERNAME = "madhu58"
     }
 
     stages {
@@ -14,47 +15,49 @@ pipeline {
             }
         }
 
-        stage('Build Image') {
+        stage('Build Docker Image') {
             steps {
-                sh 'docker build -t market-app .'
+                bat """
+                docker build -t %madhu58%/%IMAGE_NAME%:%IMAGE_TAG% .
+                """
             }
         }
 
         stage('Docker Login') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub',
-                        usernameVariable: 'USER',
-                        passwordVariable: 'PASS'
-                    )
-                ]) {
-                    sh '''
-                    echo $PASS | docker login -u $USER --password-stdin
-                    '''
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+
+                    bat """
+                    docker login -u %DOCKER_USER% -p %DOCKER_PASS%
+                    """
                 }
             }
         }
 
-        stage('Tag Image') {
+        stage('Push Docker Image') {
             steps {
-                sh 'docker tag market-app $IMAGE:latest'
-            }
-        }
-
-        stage('Push Image') {
-            steps {
-                sh 'docker push $IMAGE:latest'
+                bat """
+                docker push %madhu58%/%IMAGE_NAME%:%IMAGE_TAG%
+                """
             }
         }
     }
 
     post {
         success {
-            echo 'Docker image pushed successfully!'
+            echo 'Docker image built and pushed successfully.'
         }
+
         failure {
             echo 'Pipeline failed.'
+        }
+
+        always {
+            cleanWs()
         }
     }
 }
